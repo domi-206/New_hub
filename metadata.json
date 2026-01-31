@@ -1,0 +1,7 @@
+{
+  "name": "UniSpace StudyHub",
+  "description": "An AI-powered study assistant that helps students learn through document analysis, quizzes, AI tutoring, and podcast-style learning.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
