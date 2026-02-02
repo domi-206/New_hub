@@ -4,7 +4,7 @@ import { analyzeDocument } from '../geminiService';
 import { DocumentAnalysis } from '../types';
 
 interface DocumentUploaderProps {
-  onAnalysisComplete: (analysis: DocumentAnalysis, rawContent: string) => void;
+  onAnalysisComplete: (analysis: DocumentAnalysis, rawContent: string, fileBlob?: Blob) => void;
   onLoading: (isLoading: boolean, messages?: string | string[]) => void;
 }
 
@@ -56,8 +56,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({ onAnalysisCo
       const base64 = await fileToBase64(selectedFile);
       const analysis = await analyzeDocument(finalProjectName, base64, selectedFile.type);
       
-      // We pass analysis.extractedText as the rawContent for subsequent modules
-      onAnalysisComplete(analysis, analysis.extractedText || "");
+      onAnalysisComplete(analysis, analysis.extractedText || "", selectedFile);
     } catch (error: any) {
       console.error("Project Creation Failed:", error);
       alert(`Project Creation Failed: ${error.message || "Please check your document format and try again."}`);

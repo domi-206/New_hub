@@ -9,11 +9,9 @@ const safeJsonParse = (text: string) => {
   if (!text) throw new Error("Empty response from UniSpace AI.");
   
   try {
-    // Attempt to find JSON within markdown markers first
     const markdownMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     const candidate = markdownMatch ? markdownMatch[1] : text;
 
-    // Find the first and last brace/bracket to isolate JSON
     const firstBrace = candidate.indexOf('{');
     const firstBracket = candidate.indexOf('[');
     const start = (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) ? firstBrace : firstBracket;
@@ -85,7 +83,7 @@ export const analyzeDocument = async (projectName: string, base64Data: string, m
   return {
     id: crypto.randomUUID(),
     name: projectName,
-    size: 0, // Simplified for UI
+    size: 0,
     uploadedAt: Date.now(),
     mainTopics: data.mainTopics?.map((t: any) => ({ 
       ...t, 
@@ -100,11 +98,12 @@ export const analyzeDocument = async (projectName: string, base64Data: string, m
 
 export const generateQuiz = async (topic: Topic, count: number, docContent: string, signal?: AbortSignal): Promise<Question[]> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const safeCount = Math.min(count, 15); 
+  const safeCount = Math.min(count, 50); 
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Based on this text: "${docContent.substring(0, 10000)}", create a ${safeCount} question quiz for: "${topic.title}".`,
+    contents: `Based on this text: "${docContent.substring(0, 10000)}", create a ${safeCount} question quiz for: "${topic.title}". 
+    CRITICAL: For each question, provide an accurate pageReference based on the document source.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -167,7 +166,7 @@ export const generateSpeechBase64 = async (text: string, voiceName: string): Pro
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: text.substring(0, 600) }] }],
+    contents: [{ parts: [{ text: text.substring(0, 800) }] }],
     config: {
       responseModalities: [Modality.AUDIO],
       speechConfig: {
@@ -180,9 +179,14 @@ export const generateSpeechBase64 = async (text: string, voiceName: string): Pro
 
 export const generatePodcastScript = async (topic: Topic, hosts: any[], docContent: string, signal?: AbortSignal) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const hostIntro = hosts.map(h => `${h.name} (Tone: ${h.tone})`).join(' and ');
+  const prompt = `Write a ${hosts.length > 1 ? 'conversational' : 'solo'} podcast script featuring ${hostIntro}. 
+  The script should focus on "${topic.title}" and be based on this context: ${docContent.substring(0, 6000)}.
+  FORMAT: Start each line with the host name followed by a colon. Make it engaging and easy to understand.`;
+  
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Podcast script for "${topic.title}". Based on context: ${docContent.substring(0, 5000)}`
+    contents: prompt
   });
   if (signal?.aborted) throw new Error("Aborted");
   return response.text || "";

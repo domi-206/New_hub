@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatSession, ChatMessage } from '../types';
 import { getTutorResponse, generateSpeechBase64, decode, decodeAudioData } from '../geminiService';
-import { ACCENTS, TONES, VOICE_MAP } from '../constants';
+// Added Logo to the imports from constants
+import { Logo, ACCENTS, TONES, VOICE_MAP } from '../constants';
 
 interface TutorModuleProps {
   rawContent: string;
@@ -59,7 +60,6 @@ export const TutorModule: React.FC<TutorModuleProps> = ({ rawContent, onLoading 
 
     onLoading(true, "AI is responding...");
     try {
-      // Pass simple history to helper
       const response = await getTutorResponse(currentInput, activeSession?.messages || [], rawContent);
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
@@ -78,6 +78,7 @@ export const TutorModule: React.FC<TutorModuleProps> = ({ rawContent, onLoading 
   };
 
   const playResponse = async (text: string) => {
+    // Only triggers loading when playback is actually requested
     onLoading(true, "Synthesizing voice...");
     try {
       if (!audioContextRef.current) {
@@ -135,6 +136,7 @@ export const TutorModule: React.FC<TutorModuleProps> = ({ rawContent, onLoading 
       <div className="flex-1 flex flex-col relative bg-white dark:bg-gray-900">
         <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 z-10">
           <div className="flex gap-4">
+            {/* Immediate selection without loading screen */}
             <select 
               value={accent} 
               onChange={(e) => setAccent(e.target.value)}
@@ -158,6 +160,8 @@ export const TutorModule: React.FC<TutorModuleProps> = ({ rawContent, onLoading 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           {!activeSessionId ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40 grayscale">
+              {/* Logo component is now correctly imported */}
+              <Logo className="h-16 opacity-10" />
               <p className="text-2xl font-black text-gray-900 dark:text-white">Start a new session</p>
             </div>
           ) : activeSession.messages.length === 0 ? (

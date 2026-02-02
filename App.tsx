@@ -23,6 +23,7 @@ const App: React.FC = () => {
   });
   const [docAnalysis, setDocAnalysis] = useState<DocumentAnalysis | null>(null);
   const [rawContent, setRawContent] = useState<string>('');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -45,9 +46,12 @@ const App: React.FC = () => {
     setLoading({ isLoading, messages: normalizedMessages, onCancel });
   };
 
-  const onAnalysisComplete = (analysis: DocumentAnalysis, content: string) => {
+  const onAnalysisComplete = (analysis: DocumentAnalysis, content: string, fileBlob?: Blob) => {
     setDocAnalysis(analysis);
     setRawContent(content);
+    if (fileBlob) {
+      setPdfUrl(URL.createObjectURL(fileBlob));
+    }
     setCurrentView('selection');
   };
 
@@ -155,6 +159,7 @@ const App: React.FC = () => {
           <QuizModule 
             topics={docAnalysis?.mainTopics || []} 
             rawContent={rawContent} 
+            pdfUrl={pdfUrl}
             onQuizComplete={handleQuizComplete}
             onLoading={handleLoading}
             onBack={() => setCurrentView('selection')}
@@ -172,7 +177,6 @@ const App: React.FC = () => {
              <PodcastModule 
                 topics={docAnalysis?.mainTopics || []} 
                 rawContent={rawContent} 
-                onPodcastComplete={() => {}} 
                 onLoading={handleLoading}
              />
           </div>

@@ -6,12 +6,13 @@ import { generateQuiz, analyzeQuizResults } from '../geminiService';
 interface QuizModuleProps {
   topics: Topic[];
   rawContent: string;
+  pdfUrl?: string | null;
   onQuizComplete: (topicId: string, score: number) => void;
   onLoading: (isLoading: boolean, messages?: string | string[], onCancel?: () => void) => void;
   onBack: () => void;
 }
 
-export const QuizModule: React.FC<QuizModuleProps> = ({ topics, rawContent, onQuizComplete, onLoading, onBack }) => {
+export const QuizModule: React.FC<QuizModuleProps> = ({ topics, rawContent, pdfUrl, onQuizComplete, onLoading, onBack }) => {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [questionCount, setQuestionCount] = useState(10);
   const [timePerQuestion, setTimePerQuestion] = useState(30);
@@ -134,6 +135,14 @@ export const QuizModule: React.FC<QuizModuleProps> = ({ topics, rawContent, onQu
       setQuizResults(session);
     } finally {
       onLoading(false);
+    }
+  };
+
+  const openInPdf = (page: number) => {
+    if (pdfUrl) {
+      window.open(`${pdfUrl}#page=${page}`, '_blank');
+    } else {
+      alert("PDF reference not available. This usually happens if you've reloaded the page.");
     }
   };
 
@@ -262,12 +271,18 @@ export const QuizModule: React.FC<QuizModuleProps> = ({ topics, rawContent, onQu
                 }`}>
                   {answers[i] === q.correctIndex ? 'Correct' : 'Incorrect'}
                 </div>
-                <div className="text-xs font-black text-gray-400 uppercase tracking-widest">Page {q.pageReference}</div>
+                <button 
+                  onClick={() => openInPdf(q.pageReference)}
+                  className="group/btn flex items-center gap-2 text-xs font-black text-[#26B11F] uppercase tracking-widest hover:underline"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  View in PDF (Page {q.pageReference})
+                </button>
               </div>
               <p className="text-xl font-bold text-gray-800 dark:text-white leading-snug">{q.text}</p>
               <div className="mt-6 space-y-3">
                  <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                    <p className="text-sm font-bold text-gray-400 uppercase mb-1">Answer</p>
+                    <p className="text-sm font-bold text-gray-400 uppercase mb-1">Correct Answer</p>
                     <p className="font-semibold text-gray-800 dark:text-gray-200">{q.options[q.correctIndex]}</p>
                  </div>
                  {answers[i] !== q.correctIndex && (
@@ -276,6 +291,10 @@ export const QuizModule: React.FC<QuizModuleProps> = ({ topics, rawContent, onQu
                       <p className="font-semibold text-red-600 dark:text-red-400">{answers[i] === -1 ? 'No answer' : q.options[answers[i]]}</p>
                    </div>
                  )}
+                 <div className="mt-4 p-5 bg-[#26B11F]/5 rounded-2xl border border-[#26B11F]/10">
+                    <p className="text-xs font-black text-[#26B11F] uppercase mb-2">Key Reference Explanation</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 leading-relaxed italic">"{q.explanation}"</p>
+                 </div>
               </div>
             </div>
           ))}
@@ -327,16 +346,16 @@ export const QuizModule: React.FC<QuizModuleProps> = ({ topics, rawContent, onQu
               <div className="relative pt-2">
                 <input 
                   type="range"
-                  min="10"
-                  max="100"
+                  min="5"
+                  max="50"
                   step="1"
                   value={questionCount}
                   onChange={(e) => setQuestionCount(parseInt(e.target.value))}
                   className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#26B11F] border border-gray-200 dark:border-gray-700"
                 />
                 <div className="flex justify-between mt-3 text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                  <span>10 Items</span>
-                  <span>100 Items</span>
+                  <span>5 Items</span>
+                  <span>50 Items</span>
                 </div>
               </div>
             </div>
